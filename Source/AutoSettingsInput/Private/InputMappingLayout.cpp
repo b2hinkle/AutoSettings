@@ -396,20 +396,9 @@ void FInputMappingLayout::Apply(APlayerController* Player)
 		return;
 	}
 
-	// Loop through ActionMappings and remove any that aren't in Blacklist,
-	// then add ones from GetAction() onto it (thus preserving any actions from the blacklist)
-	Player->PlayerInput->ActionMappings.RemoveAll([this](const FInputActionKeyMapping& Mapping)
-	{
-		return !Config->GetPreservedActions().Contains(Mapping.ActionName);
-	});
-	Player->PlayerInput->ActionMappings.Append(GetActions(false));
-
-	// Same for axes
-	Player->PlayerInput->AxisMappings.RemoveAll([this](const FInputAxisKeyMapping& Mapping)
-	{
-		return !Config->GetPreservedAxes().Contains(Mapping.AxisName);
-	});
-	Player->PlayerInput->AxisMappings.Append(GetAxes(false));
+	// Replace the mappings on the PlayerInput
+	Player->PlayerInput->ActionMappings = GetActions(false);
+	Player->PlayerInput->AxisMappings = GetAxes(false);
 
 	// Rebuild
 	Player->PlayerInput->ForceRebuildingKeyMaps(false);

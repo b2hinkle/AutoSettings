@@ -22,7 +22,7 @@ struct AUTOSETTINGSINPUT_API FInputMappingPreset
     bool bUseDefaultMappings = false;
 
     // Input mappings for this preset if not using default mappings
-    UPROPERTY(config, EditAnywhere, Category = "Input Mapping Preset", meta = (EditCondition = "!bUseDefaultMappings"))
+    UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Input Mapping Preset", meta = (EditCondition = "!bUseDefaultMappings"))
     FInputMappingLayout InputLayout;
 
     UPROPERTY(config, meta = (DeprecatedProperty))

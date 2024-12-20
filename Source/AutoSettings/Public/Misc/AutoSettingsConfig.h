@@ -17,8 +17,9 @@ public:
 
 	// Config ini file (without extension) that settings are saved to.
 	// Requires engine restart for changes to take effect.
+	// Note: Unreal prefers names that contain the string "user"
 	UPROPERTY(Config, EditAnywhere, Category = Settings)
-	FString SettingsIniName = "Settings";
+	FString SettingsIniName = "UserSettings";
 
 	// Config section that settings are saved to within the config ini file
 	UPROPERTY(Config, EditAnywhere, Category = Settings)

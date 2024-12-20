@@ -1,6 +1,8 @@
 // Copyright Sam Bonifacio. All Rights Reserved.
 
 #include "UI/AxisLabel.h"
+
+#include "AutoSettingsError.h"
 #include "InputMappingManager.h"
 
 
@@ -11,6 +13,12 @@ void UAxisLabel::InitializeLabel()
 
 void UAxisLabel::UpdateLabel_Implementation()
 {
+	if(!IsValid(KeyLabel))
+	{
+		FAutoSettingsError::LogMissingBindWidget(GetClass(), GET_MEMBER_NAME_CHECKED(ThisClass, KeyLabel));
+		return;
+	}
+	
 	const FInputAxisKeyMapping Mapping = UInputMappingManager::Get()->GetPlayerAxisMapping(GetOwningPlayer(), AxisName, Scale, MappingGroup, KeyGroup, bUsePlayerKeyGroup);
 
 	KeyLabel->Key = Mapping.Key;

@@ -28,6 +28,11 @@ void FAutoSettingsError::LogWidgetCreationFailed(UClass* SourceClass, const FStr
 	LogError(FString::Printf(TEXT("%s: Failed to create %s widget"), *GetSafeClassName(SourceClass), *WidgetName));
 }
 
+void FAutoSettingsError::LogMissingBindWidget(UClass* SourceClass, const FName& PropertyName)
+{
+	LogError(FString::Printf(TEXT("%s: Missing or invalid BindWidget for property %s. Please make a widget of the correct type and name exists."), *GetSafeClassName(SourceClass), *PropertyName.ToString()));
+}
+
 void FAutoSettingsError::LogMissingCVar(const FString& Context, const FName& CVar)
 {
 	LogError(FString::Printf(TEXT("%s: Missing or unregistered CVar: '%s'. Please ensure the CVar is registered correctly."), *Context, *CVar.ToString()));

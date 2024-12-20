@@ -5,6 +5,7 @@
 #include "InputMappingManager.h"
 #include "Misc/AutoSettingsInputConfig.h"
 #include "Misc/AutoSettingsInputLogs.h"
+#include "Engine/GameViewportClient.h"
 
 UBindCapturePrompt::UBindCapturePrompt(const FObjectInitializer& ObjectInitializer)
 	: UUserWidget(ObjectInitializer),
@@ -13,7 +14,7 @@ UBindCapturePrompt::UBindCapturePrompt(const FObjectInitializer& ObjectInitializ
 	CaptureMode(EBindingCaptureMode::OnReleased),
 	AccumulatedMouseDelta(FVector2D::ZeroVector)
 {
-	bIsFocusable = true;
+	SetIsFocusable(true);
 }
 
 void UBindCapturePrompt::Cancel()

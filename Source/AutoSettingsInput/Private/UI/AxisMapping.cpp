@@ -1,6 +1,8 @@
 // Copyright Sam Bonifacio. All Rights Reserved.
 
 #include "UI/AxisMapping.h"
+
+#include "AutoSettingsError.h"
 #include "InputMappingManager.h"
 
 void UAxisMapping::NativeConstruct()
@@ -10,6 +12,12 @@ void UAxisMapping::NativeConstruct()
 
 void UAxisMapping::UpdateLabel_Implementation()
 {
+	if(!GetAxisLabel())
+	{
+		FAutoSettingsError::LogMissingBindWidget(GetClass(), GET_MEMBER_NAME_CHECKED(ThisClass, AxisLabel));
+		return;
+	}
+	
 	GetAxisLabel()->AxisName = AxisName;
 	GetAxisLabel()->Scale = Scale;
 	GetAxisLabel()->MappingGroup = MappingGroup;

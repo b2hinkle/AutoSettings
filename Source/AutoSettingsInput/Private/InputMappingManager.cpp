@@ -8,6 +8,7 @@
 #include "AutoSettingsPlayer.h"
 #include "ConfigUtils.h"
 #include "Misc/AutoSettingsInputProjectConfig.h"
+#include "Misc/ConfigCacheIni.h"
 
 static FAutoConsoleCommand DumpPlayersCommand(
 	TEXT("AutoSettings.Input.DumpPlayers"),
@@ -16,10 +17,10 @@ static FAutoConsoleCommand DumpPlayersCommand(
 	ECVF_Default);
 
 static FAutoConsoleCommand TestLayoutMergeCommand(
-    TEXT("AutoSettings.Input.TestLayoutMerge"),
-    TEXT("Run a layout merge and log each step"),
-    FConsoleCommandDelegate::CreateStatic(UInputMappingManager::TestLayoutMerge),
-    ECVF_Default);
+	TEXT("AutoSettings.Input.TestLayoutMerge"),
+	TEXT("Run a layout merge and log each step"),
+	FConsoleCommandDelegate::CreateStatic(UInputMappingManager::TestLayoutMerge),
+	ECVF_Default);
 
 static TAutoConsoleVariable<int32> CVarDebugMode(
 	TEXT("AutoSettings.Input.Debug"),
@@ -29,9 +30,17 @@ static TAutoConsoleVariable<int32> CVarDebugMode(
 
 UInputMappingManager::UInputMappingManager()
 {
-	if(HasAllFlags(RF_ClassDefaultObject))
+	if (HasAllFlags(RF_ClassDefaultObject))
 	{
-		FConfigUtils::MigrateConfigPropertiesFromSection(this, TEXT("/Script/AutoSettings.InputMappingManager"));
+		// Migrate from AutoSettings module
+		FConfigUtils::MigrateConfigPropertiesFromSection(this, TEXT("Input"),
+			TEXT("/Script/AutoSettings.InputMappingManager"));
+		// Migrate from Input ini
+		FConfigUtils::MigrateConfigPropertiesFromSection(this, TEXT("Input"),
+			TEXT("/Script/AutoSettingsInput.InputMappingManager"));
+		// Migrate from Settings ini
+		FConfigUtils::MigrateConfigPropertiesFromSection(this, TEXT("Settings"),
+			TEXT("/Script/AutoSettingsInput.InputMappingManager"));
 	}
 }
 
@@ -45,17 +54,17 @@ TArray<FInputMappingPreset> UInputMappingManager::GetDefaultInputPresets()
 	return GetDefault<UAutoSettingsInputProjectConfig>()->GetInputPresets();
 }
 
-FPlayerInputMappings UInputMappingManager::GetPlayerInputMappingsStatic(APlayerController * Player)
+FPlayerInputMappings UInputMappingManager::GetPlayerInputMappingsStatic(APlayerController* Player)
 {
-	if(!FInputMappingUtils::IsValidPlayer(Player, true, "Get Player Input Mappings"))
+	if (!FInputMappingUtils::IsValidPlayer(Player, true, "Get Player Input Mappings"))
 	{
 		return FPlayerInputMappings();
 	}
-	
+
 	return Get()->FindPlayerInputMappings(Player);
 }
 
-void UInputMappingManager::SetPlayerInputPresetStatic(APlayerController * Player, FInputMappingPreset Preset)
+void UInputMappingManager::SetPlayerInputPresetStatic(APlayerController* Player, FInputMappingPreset Preset)
 {
 	Get()->SetPlayerInputPreset(Player, Preset);
 }
@@ -65,24 +74,28 @@ void UInputMappingManager::SetPlayerInputPresetByTag(APlayerController* Player, 
 	Get()->SetPlayerInputPreset(Player, PresetTag);
 }
 
-void UInputMappingManager::SetPlayerKeyGroupStatic(APlayerController * Player, FGameplayTag KeyGroup)
+void UInputMappingManager::SetPlayerKeyGroupStatic(APlayerController* Player, FGameplayTag KeyGroup)
 {
 	Get()->SetPlayerKeyGroup(Player, KeyGroup);
 }
 
-void UInputMappingManager::AddPlayerActionOverrideStatic(APlayerController * Player, const FInputActionKeyMapping & NewMapping, int32 MappingGroup, bool bAnyKeyGroup)
+void UInputMappingManager::AddPlayerActionOverrideStatic(APlayerController* Player,
+	const FInputActionKeyMapping& NewMapping, int32 MappingGroup,
+	bool bAnyKeyGroup)
 {
 	Get()->AddPlayerActionOverride(Player, NewMapping, MappingGroup, bAnyKeyGroup);
 }
 
-void UInputMappingManager::AddPlayerAxisOverrideStatic(APlayerController * Player, const FInputAxisKeyMapping & NewMapping, int32 MappingGroup, bool bAnyKeyGroup)
+void UInputMappingManager::AddPlayerAxisOverrideStatic(APlayerController* Player,
+	const FInputAxisKeyMapping& NewMapping, int32 MappingGroup,
+	bool bAnyKeyGroup)
 {
 	Get()->AddPlayerAxisOverride(Player, NewMapping, MappingGroup, bAnyKeyGroup);
 }
 
-bool UInputMappingManager::InitializePlayerInputOverridesStatic(APlayerController * Player)
+bool UInputMappingManager::InitializePlayerInputOverridesStatic(APlayerController* Player)
 {
-	if(!FInputMappingUtils::IsValidPlayer(Player, true, "Initialize Player Input Overrides"))
+	if (!FInputMappingUtils::IsValidPlayer(Player, true, "Initialize Player Input Overrides"))
 	{
 		return false;
 	}
@@ -100,22 +113,22 @@ bool UInputMappingManager::InitializePlayerInputOverridesStatic(APlayerControlle
 FInputActionKeyMapping UInputMappingManager::GetPlayerActionMappingStatic(APlayerController* Player, FName ActionName,
 	int32 MappingGroup)
 {
-	if(!FInputMappingUtils::IsValidPlayer(Player, true, "Get Player Action Mapping"))
+	if (!FInputMappingUtils::IsValidPlayer(Player, true, "Get Player Action Mapping"))
 	{
 		return FInputActionKeyMapping();
 	}
-	
+
 	return Get()->GetPlayerActionMapping(Player, ActionName, MappingGroup, FGameplayTag(), true);
 }
 
 FInputAxisKeyMapping UInputMappingManager::GetPlayerAxisMappingStatic(APlayerController* Player, FName AxisName,
 	float Scale, int32 MappingGroup)
 {
-	if(!FInputMappingUtils::IsValidPlayer(Player, true, "Get Player Axis Mapping"))
+	if (!FInputMappingUtils::IsValidPlayer(Player, true, "Get Player Axis Mapping"))
 	{
 		return FInputAxisKeyMapping();
 	}
-	
+
 	return Get()->GetPlayerAxisMapping(Player, AxisName, Scale, MappingGroup, FGameplayTag(), true);
 }
 
@@ -142,15 +155,20 @@ void UInputMappingManager::DumpPlayers()
 		{
 			UE_LOG(LogAutoSettingsInput, Display, TEXT("    Object name: %s"), *PC->GetName());
 			UE_LOG(LogAutoSettingsInput, Display, TEXT("    Human readable name: %s"), *PC->GetHumanReadableName());
-			UE_LOG(LogAutoSettingsInput, Display, TEXT("    Implements IAutoSettingsPlayer: %i"), (int32)PC->Implements<UAutoSettingsPlayer>());
+			UE_LOG(LogAutoSettingsInput, Display, TEXT("    Implements IAutoSettingsPlayer: %i"),
+				(int32)PC->Implements<UAutoSettingsPlayer>());
 			FPlayerInputMappings InputMappings = Instance->FindPlayerInputMappings(PC);
-			UE_LOG(LogAutoSettingsInput, Display, TEXT("    Player ID (if applicable): %s"), InputMappings.PlayerId.IsEmpty() ? TEXT("EMPTY") : *InputMappings.PlayerId);
+			UE_LOG(LogAutoSettingsInput, Display, TEXT("    Player ID (if applicable): %s"),
+				InputMappings.PlayerId.IsEmpty() ? TEXT("EMPTY") : *InputMappings.PlayerId);
 			UE_LOG(LogAutoSettingsInput, Display, TEXT("    Key Group: %s"), *InputMappings.PlayerKeyGroup.ToString());
-			UE_LOG(LogAutoSettingsInput, Display, TEXT("    Base Preset Tag: %s"), *InputMappings.BasePresetTag.ToString());
-			UE_LOG(LogAutoSettingsInput, Display, TEXT("    Custom Mappings: %i"), (int32)InputMappings.MappingOverrides.GetTotalNumInputDefinitions());
+			UE_LOG(LogAutoSettingsInput, Display, TEXT("    Base Preset Tag: %s"),
+				*InputMappings.BasePresetTag.ToString());
+			UE_LOG(LogAutoSettingsInput, Display, TEXT("    Custom Mappings: %i"),
+				(int32)InputMappings.MappingOverrides.GetTotalNumInputDefinitions());
 			DumpLayout(InputMappings.MappingOverrides);
 			FInputMappingLayout MergedLayout = InputMappings.BuildMergedMappingLayout();
-			UE_LOG(LogAutoSettingsInput, Display, TEXT("    Merged Mappings: %i"), (int32)MergedLayout.GetTotalNumInputDefinitions());
+			UE_LOG(LogAutoSettingsInput, Display, TEXT("    Merged Mappings: %i"),
+				(int32)MergedLayout.GetTotalNumInputDefinitions());
 			DumpLayout(MergedLayout);
 		}
 		else
@@ -166,7 +184,7 @@ void UInputMappingManager::TestLayoutMerge()
 	UE_LOG(LogAutoSettingsInput, Display, TEXT("----- TestLayoutMerge -----"));
 	UInputMappingManager* Instance = Get();
 	APlayerController* PC = Instance->RegisteredPlayerControllers[0];
-	if(ensure(PC))
+	if (ensure(PC))
 	{
 		const FPlayerInputMappings InputMappings = Instance->FindPlayerInputMappings(PC);
 		InputMappings.BuildMergedMappingLayout(true);
@@ -174,21 +192,29 @@ void UInputMappingManager::TestLayoutMerge()
 	UE_LOG(LogAutoSettingsInput, Display, TEXT("----- End TestLayoutMerge -----"));
 }
 
+void UInputMappingManager::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+
+	GConfig->LoadFile(GetConfigFilename(this));
+	LoadConfig();
+}
+
 void UInputMappingManager::SetPlayerKeyGroup(APlayerController* Player, FGameplayTag KeyGroup)
 {
-	if(!FInputMappingUtils::IsValidPlayer(Player, true, "Set Player Key Group"))
+	if (!FInputMappingUtils::IsValidPlayer(Player, true, "Set Player Key Group"))
 	{
 		return;
 	}
-	
+
 	FPlayerInputMappings InputMappings = FindPlayerInputMappings(Player);
 
-	if(InputMappings.PlayerKeyGroup == KeyGroup)
+	if (InputMappings.PlayerKeyGroup == KeyGroup)
 	{
 		// No-op, bail to avoid save
 		return;
 	}
-	
+
 	InputMappings.PlayerKeyGroup = KeyGroup;
 
 	SavePlayerInputMappings(Player, InputMappings);
@@ -197,14 +223,16 @@ void UInputMappingManager::SetPlayerKeyGroup(APlayerController* Player, FGamepla
 	Get()->OnMappingsChanged.Broadcast(Player);
 }
 
-void UInputMappingManager::AddPlayerActionOverride(APlayerController * Player, const FInputActionKeyMapping& NewMapping, int32 MappingGroup, bool bAnyKeyGroup)
+void UInputMappingManager::AddPlayerActionOverride(APlayerController* Player, const FInputActionKeyMapping& NewMapping,
+	int32 MappingGroup, bool bAnyKeyGroup)
 {
-	if(!FInputMappingUtils::IsValidPlayer(Player, true, "Add Player Action Override"))
+	if (!FInputMappingUtils::IsValidPlayer(Player, true, "Add Player Action Override"))
 	{
 		return;
 	}
-	
-	UE_LOG(LogAutoSettingsInput, Log, TEXT("InputMappingManager: Adding action override: %s"), *NewMapping.ActionName.ToString());
+
+	UE_LOG(LogAutoSettingsInput, Log, TEXT("InputMappingManager: Adding action override: %s"),
+		*NewMapping.ActionName.ToString());
 
 	FPlayerInputMappings PlayerInputMappings = FindPlayerInputMappings(Player);
 
@@ -223,19 +251,21 @@ void UInputMappingManager::AddPlayerActionOverride(APlayerController * Player, c
 	}
 }
 
-void UInputMappingManager::AddPlayerAxisOverride(APlayerController* Player, const FInputAxisKeyMapping& NewMapping, int32 MappingGroup, bool bAnyKeyGroup)
+void UInputMappingManager::AddPlayerAxisOverride(APlayerController* Player, const FInputAxisKeyMapping& NewMapping,
+	int32 MappingGroup, bool bAnyKeyGroup)
 {
-	if(!FInputMappingUtils::IsValidPlayer(Player, true, "Add Player Axis Override"))
+	if (!FInputMappingUtils::IsValidPlayer(Player, true, "Add Player Axis Override"))
 	{
 		return;
 	}
-	
-	UE_LOG(LogAutoSettingsInput, Log, TEXT("InputMappingManager: Adding axis override: %s, Scale: %f"), *NewMapping.AxisName.ToString(), NewMapping.Scale);
+
+	UE_LOG(LogAutoSettingsInput, Log, TEXT("InputMappingManager: Adding axis override: %s, Scale: %f"),
+		*NewMapping.AxisName.ToString(), NewMapping.Scale);
 
 	FPlayerInputMappings PlayerInputMappings = FindPlayerInputMappings(Player);
-	
+
 	PlayerInputMappings.AddAxisOverride(NewMapping, MappingGroup, bAnyKeyGroup);
-	
+
 	// Resolve and apply new final merged layout
 	PlayerInputMappings.Apply(Player);
 
@@ -243,13 +273,15 @@ void UInputMappingManager::AddPlayerAxisOverride(APlayerController* Player, cons
 
 	OnMappingsChanged.Broadcast(Player);
 
-	if(CVarDebugMode->GetBool())
+	if (CVarDebugMode->GetBool())
 	{
 		DumpPlayers();
 	}
 }
 
-FInputActionKeyMapping UInputMappingManager::GetPlayerActionMapping(APlayerController* Player, FName ActionName, int32 MappingGroup, FGameplayTag KeyGroup, bool bUsePlayerKeyGroup) const
+FInputActionKeyMapping UInputMappingManager::GetPlayerActionMapping(APlayerController* Player, FName ActionName,
+	int32 MappingGroup, FGameplayTag KeyGroup,
+	bool bUsePlayerKeyGroup) const
 {
 	FPlayerInputMappings InputOverride = FindPlayerInputMappingsOrDefault(Player);
 
@@ -278,11 +310,13 @@ FInputActionKeyMapping UInputMappingManager::GetPlayerActionMapping(APlayerContr
 	{
 		return MergedMappingLayout.GetMappingGroups()[MappingGroup].GetAction(ActionName, KeyGroup);
 	}
-	
+
 	return FInputActionKeyMapping();
 }
 
-FInputAxisKeyMapping UInputMappingManager::GetPlayerAxisMapping(APlayerController * Player, FName AxisName, float Scale, int32 MappingGroup, FGameplayTag KeyGroup, bool bUsePlayerKeyGroup) const
+FInputAxisKeyMapping UInputMappingManager::GetPlayerAxisMapping(APlayerController* Player, FName AxisName, float Scale,
+	int32 MappingGroup, FGameplayTag KeyGroup,
+	bool bUsePlayerKeyGroup) const
 {
 	FPlayerInputMappings InputOverride = FindPlayerInputMappingsOrDefault(Player);
 
@@ -311,17 +345,19 @@ FInputAxisKeyMapping UInputMappingManager::GetPlayerAxisMapping(APlayerControlle
 	{
 		return MergedMappingLayout.GetMappingGroups()[MappingGroup].GetAxis(AxisName, Scale, KeyGroup);
 	}
-	
+
 	return FInputAxisKeyMapping();
 }
 
-TArray<FInputActionKeyMapping> UInputMappingManager::GetPlayerActionMappings(APlayerController* Player, FName ActionName, int32 MappingGroup, FGameplayTag KeyGroup, bool bUsePlayerKeyGroup) const
+TArray<FInputActionKeyMapping> UInputMappingManager::GetPlayerActionMappings(
+	APlayerController* Player, FName ActionName, int32 MappingGroup, FGameplayTag KeyGroup,
+	bool bUsePlayerKeyGroup) const
 {
-	if(!FInputMappingUtils::IsValidPlayer(Player, true, "Get Player Action Mappings"))
+	if (!FInputMappingUtils::IsValidPlayer(Player, true, "Get Player Action Mappings"))
 	{
 		return {};
 	}
-	
+
 	FPlayerInputMappings InputOverride = FindPlayerInputMappingsOrDefault(Player);
 
 	if (bUsePlayerKeyGroup)
@@ -348,17 +384,19 @@ TArray<FInputActionKeyMapping> UInputMappingManager::GetPlayerActionMappings(APl
 			Mappings.Append(MergedMappingLayout.GetMappingGroups()[MappingGroup].GetAllActions(ActionName, KeyGroup));
 		}
 	}
-	
+
 	return Mappings;
 }
 
-TArray<FInputAxisKeyMapping> UInputMappingManager::GetPlayerAxisMappings(APlayerController* Player, FName AxisName, float Scale, int32 MappingGroup, FGameplayTag KeyGroup, bool bUsePlayerKeyGroup) const
+TArray<FInputAxisKeyMapping> UInputMappingManager::GetPlayerAxisMappings(
+	APlayerController* Player, FName AxisName, float Scale, int32 MappingGroup, FGameplayTag KeyGroup,
+	bool bUsePlayerKeyGroup) const
 {
-	if(!FInputMappingUtils::IsValidPlayer(Player, true, "Get Player Axis Mappings"))
+	if (!FInputMappingUtils::IsValidPlayer(Player, true, "Get Player Axis Mappings"))
 	{
 		return {};
 	}
-	
+
 	FPlayerInputMappings InputOverride = FindPlayerInputMappingsOrDefault(Player);
 
 	if (bUsePlayerKeyGroup)
@@ -385,13 +423,15 @@ TArray<FInputAxisKeyMapping> UInputMappingManager::GetPlayerAxisMappings(APlayer
 			Mappings.Append(MergedMappingLayout.GetMappingGroups()[MappingGroup].GetAllAxes(AxisName, Scale, KeyGroup));
 		}
 	}
-	
+
 	return Mappings;
 }
 
-void UInputMappingManager::GetPlayerMappingsByKey(APlayerController* Player, FKey Key, TArray<FInputActionKeyMapping>& Actions, TArray<FInputAxisKeyMapping>& Axes) const
+void UInputMappingManager::GetPlayerMappingsByKey(APlayerController* Player, FKey Key,
+	TArray<FInputActionKeyMapping>& Actions,
+	TArray<FInputAxisKeyMapping>& Axes) const
 {
-	if(!FInputMappingUtils::IsValidPlayer(Player, true, "Get Player Key Mappings"))
+	if (!FInputMappingUtils::IsValidPlayer(Player, true, "Get Player Key Mappings"))
 	{
 		return;
 	}
@@ -404,36 +444,39 @@ void UInputMappingManager::GetPlayerMappingsByKey(APlayerController* Player, FKe
 	Axes.Reset();
 
 	// Find actions with the given key
-	for(const FInputActionKeyMapping& Action : MergedMappingLayout.GetActions())
+	for (const FInputActionKeyMapping& Action : MergedMappingLayout.GetActions())
 	{
-		if(Action.Key == Key)
+		if (Action.Key == Key)
 		{
 			Actions.Add(Action);
 		}
 	}
 
 	// Find axes with the given key
-	for(const FInputAxisKeyMapping& Axis : MergedMappingLayout.GetAxes())
+	for (const FInputAxisKeyMapping& Axis : MergedMappingLayout.GetAxes())
 	{
-		if(Axis.Key == Key)
+		if (Axis.Key == Key)
 		{
 			Axes.Add(Axis);
 		}
 	}
 }
 
-void UInputMappingManager::SetPlayerInputPreset(APlayerController * Player, FInputMappingPreset Preset)
+void UInputMappingManager::SetPlayerInputPreset(APlayerController* Player, FInputMappingPreset Preset)
 {
-	if(!FInputMappingUtils::IsValidPlayer(Player, true, "Set Player Input Preset"))
+	if (!FInputMappingUtils::IsValidPlayer(Player, true, "Set Player Input Preset"))
 	{
 		return;
 	}
-	
+
 	const FString PresetTag = Preset.PresetTag.IsValid() ? Preset.PresetTag.ToString() : "Invalid";
-	UE_LOG(LogAutoSettingsInput, Log, TEXT("Setting input preset for '%s', tag: %s"), *Player->GetHumanReadableName(), *PresetTag);
-	
+	UE_LOG(LogAutoSettingsInput, Log, TEXT("Setting input preset for '%s', tag: %s"), *Player->GetHumanReadableName(),
+		*PresetTag);
+
 	if (!RegisteredPlayerControllers.Contains(Player))
+	{
 		RegisterPlayerController(Player);
+	}
 
 	FPlayerInputMappings InputOverride = FindPlayerInputMappings(Player);
 	InputOverride.BasePresetTag = Preset.PresetTag;
@@ -449,7 +492,10 @@ void UInputMappingManager::SetPlayerInputPreset(APlayerController* Player, FGame
 {
 	TArray<FInputMappingPreset> Presets = GetDefaultInputPresets();
 
-	FInputMappingPreset* FoundPreset = Presets.FindByPredicate([PresetTag](FInputMappingPreset Preset) { return Preset.PresetTag == PresetTag; });
+	FInputMappingPreset* FoundPreset = Presets.FindByPredicate([PresetTag](FInputMappingPreset Preset)
+	{
+		return Preset.PresetTag == PresetTag;
+	});
 	if (FoundPreset)
 	{
 		SetPlayerInputPreset(Player, *FoundPreset);
@@ -467,7 +513,7 @@ void UInputMappingManager::PostInitProperties()
 
 	// Migrate deprecated properties
 
-	for(FPlayerInputMappings& PlayerInput : PlayerInputOverrides)
+	for (FPlayerInputMappings& PlayerInput : PlayerInputOverrides)
 	{
 		PlayerInput.SetConfig(GetDefault<UAutoSettingsInputProjectConfig>()->AsWeakInterfacePtrConst());
 		PlayerInput.MigrateDeprecatedProperties();
@@ -480,7 +526,8 @@ UWorld* UInputMappingManager::GetGameWorld() const
 	const TIndirectArray<FWorldContext>& WorldContexts = GEngine->GetWorldContexts();
 	for (const FWorldContext& Context : WorldContexts)
 	{
-		if (((Context.WorldType == EWorldType::PIE) || (Context.WorldType == EWorldType::Game)) && (Context.World() != nullptr))
+		if (((Context.WorldType == EWorldType::PIE) || (Context.WorldType == EWorldType::Game)) && (Context.World() !=
+			nullptr))
 		{
 			TestWorld = Context.World();
 			break;
@@ -537,15 +584,18 @@ FPlayerInputMappings UInputMappingManager::FindPlayerInputMappings(APlayerContro
 
 	if (bFound)
 	{
-		UE_LOG(LogAutoSettingsInput, VeryVerbose, TEXT("Found input mappings for %s with via IAutoSettingsPlayer::GetInputMappings"), *Player->GetHumanReadableName());
+		UE_LOG(LogAutoSettingsInput, VeryVerbose,
+			TEXT("Found input mappings for %s with via IAutoSettingsPlayer::GetInputMappings"),
+			*Player->GetHumanReadableName());
 	}
 
 	// Player ID string to compare
 	const FString PlayerIdString = IAutoSettingsPlayer::GetUniquePlayerIdentifier(Player);
 
-	if(!bFound)
+	if (!bFound)
 	{
-		UE_LOG(LogAutoSettingsInput, VeryVerbose, TEXT("Checking internal mappings for %s with ID %s"), *Player->GetHumanReadableName(), *PlayerIdString);
+		UE_LOG(LogAutoSettingsInput, VeryVerbose, TEXT("Checking internal mappings for %s with ID %s"),
+			*Player->GetHumanReadableName(), *PlayerIdString);
 
 		for (FPlayerInputMappings PlayerInputMapping : PlayerInputOverrides)
 		{
@@ -559,19 +609,20 @@ FPlayerInputMappings UInputMappingManager::FindPlayerInputMappings(APlayerContro
 		}
 	}
 
-	if(bFound)
+	if (bFound)
 	{
 		FoundMappings.SetConfig(GetDefault<UAutoSettingsInputProjectConfig>()->AsWeakInterfacePtrConst());
 		return FoundMappings;
-    }
+	}
 
 	// Make default
-	return FPlayerInputMappings(PlayerIdString, IAutoSettingsPlayer::GetDefaultInputMappingPreset(Player).PresetTag, GetDefault<UAutoSettingsInputProjectConfig>()->AsWeakInterfacePtrConst());
+	return FPlayerInputMappings(PlayerIdString, IAutoSettingsPlayer::GetDefaultInputMappingPreset(Player).PresetTag,
+		GetDefault<UAutoSettingsInputProjectConfig>()->AsWeakInterfacePtrConst());
 }
 
 FPlayerInputMappings UInputMappingManager::FindPlayerInputMappingsOrDefault(APlayerController* Player) const
 {
-	if(IsValid(Player))
+	if (IsValid(Player))
 	{
 		return FindPlayerInputMappings(Player);
 	}
@@ -582,7 +633,7 @@ FPlayerInputMappings UInputMappingManager::FindPlayerInputMappingsOrDefault(APla
 void UInputMappingManager::SavePlayerInputMappings(APlayerController* Player, FPlayerInputMappings& NewMappings)
 {
 	UE_LOG(LogAutoSettingsInput, Log, TEXT("Saving input overrides for %s"), *Player->GetHumanReadableName());
-	
+
 	// Remove existing mappings from config with that ID
 	PlayerInputOverrides.RemoveAll([NewMappings](const FPlayerInputMappings& ExistingMappings)
 	{
@@ -593,7 +644,7 @@ void UInputMappingManager::SavePlayerInputMappings(APlayerController* Player, FP
 	PlayerInputOverrides.Add(NewMappings);
 	SaveConfig();
 
-	if(!ensure(IsValid(Player)))
+	if (!ensure(IsValid(Player)))
 	{
 		return;
 	}
@@ -611,7 +662,8 @@ void UInputMappingManager::OnRegisteredPlayerControllerDestroyed(AActor* Destroy
 		return;
 	}
 
-	UE_LOG(LogAutoSettingsInput, Verbose, TEXT("Registered Player Controller %s for player %s destroyed"), *PlayerController->GetName(), *PlayerController->GetHumanReadableName());
+	UE_LOG(LogAutoSettingsInput, Verbose, TEXT("Registered Player Controller %s for player %s destroyed"),
+		*PlayerController->GetName(), *PlayerController->GetHumanReadableName());
 
 	// Unregister
 	RegisteredPlayerControllers.Remove(PlayerController);

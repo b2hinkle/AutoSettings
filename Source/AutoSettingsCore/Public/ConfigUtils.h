@@ -8,6 +8,6 @@ class AUTOSETTINGSCORE_API FConfigUtils
 {
 public:
 
-	static void MigrateConfigPropertiesFromSection(UObject* Object, FString OldSection);
+	static void MigrateConfigPropertiesFromSection(UObject* Object, FString OldConfig, FString OldSection);
 	
 };

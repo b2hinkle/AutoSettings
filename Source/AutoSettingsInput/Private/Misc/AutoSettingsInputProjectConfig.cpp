@@ -9,7 +9,7 @@ UAutoSettingsInputProjectConfig::UAutoSettingsInputProjectConfig()
 {
 	if(HasAllFlags(RF_ClassDefaultObject))
 	{
-		FConfigUtils::MigrateConfigPropertiesFromSection(this, TEXT("/Script/AutoSettings.AutoSettingsConfig"));
+		FConfigUtils::MigrateConfigPropertiesFromSection(this, {}, TEXT("/Script/AutoSettings.AutoSettingsConfig"));
 	}
 }
 

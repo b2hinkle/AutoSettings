@@ -57,11 +57,11 @@ struct FKeyGroup
 
 	// If true, will include all gamepad keys in this key group
 	UPROPERTY(config, EditAnywhere, Category = "Key Group")
-	bool bUseGamepadKeys;
+	bool bUseGamepadKeys = false;
 
 	// If true, will include all keys that are not gamepad keys in this key group
 	UPROPERTY(config, EditAnywhere, Category = "Key Group")
-	bool bUseNonGamepadKeys;
+	bool bUseNonGamepadKeys = false;
 
 	// Keys to include in this key group
 	UPROPERTY(config, EditAnywhere, Category = "Key Group", meta = (TitleProperty = "KeyName"))

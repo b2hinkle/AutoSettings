@@ -131,7 +131,8 @@ FInputMappingGroup FInputMappingGroup::UnbindChord(FKey Key, bool ShiftDown, boo
 	// Remove all action mappings with same chord
 	for(FInputActionKeyMapping& Action : ActionMappings)
 	{
-		if(Action.Key == Key && Action.bShift == ShiftDown && Action.bCtrl == CmdDown && Action.bAlt == AltDown && Action.bCmd == CmdDown)
+		if(Action.Key == Key && Action.bShift == ShiftDown && Action.bCtrl == CmdDown && Action.bAlt == AltDown && Action.bCmd == CmdDown
+			&& !Config->GetPreservedActions().Contains(Action.ActionName)) // Skip preserved actions
 		{
 			MappingsToRemove.ActionMappings.Add(Action);
 		}
@@ -142,7 +143,8 @@ FInputMappingGroup FInputMappingGroup::UnbindChord(FKey Key, bool ShiftDown, boo
 	{
 		for(FInputAxisKeyMapping& Axis : AxisMappings)
 		{
-			if(Axis.Key == Key)
+			if(Axis.Key == Key
+				&& !Config->GetPreservedAxes().Contains(Axis.AxisName)) // Skip preserved axes
 			{
 				MappingsToRemove.AxisMappings.Add(Axis);
 			}

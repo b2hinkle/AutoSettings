@@ -13,6 +13,7 @@ public:
 	static void LogInvalidClass(UClass* SourceClass, const FString& ClassPropertyName);
 
 	static void LogWidgetCreationFailed(UClass* SourceClass, const FString& WidgetName);
+	static void LogMissingBindWidget(UClass* SourceClass, const FName& PropertyName);
 
 	static void LogMissingCVar(const FString& Context, const FName& CVar);
 

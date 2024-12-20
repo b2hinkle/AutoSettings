@@ -8,6 +8,7 @@
 #include "Misc/ConfigCacheIni.h"
 #include "AutoSettingsLogs.h"
 #include "AutoSettingsError.h"
+#include "ConfigUtils.h"
 #include "Utility/AutoSettingsStringUtils.h"
 #include "Engine/Engine.h"
 
@@ -23,7 +24,7 @@ FString USettingsManager::GetValue(FName Key, bool bPreferConfigValue)
 		FAutoSettingsError::LogMissingCVar("Get Value", Key);
 		return FString();
 	}
-	
+
 	FString Value = bPreferConfigValue ? Get()->GetConfigValue(Key) : UConsoleUtils::GetStringCVar(Key);
 
 	if (Value.IsEmpty())
@@ -38,18 +39,22 @@ FString USettingsManager::GetValue(FName Key, bool bPreferConfigValue)
 void USettingsManager::RegisterIntCVarSetting(FName Name, int32 DefaultValue, const FString& Help)
 {
 	if (UConsoleUtils::IsCVarRegistered(Name))
+	{
 		return;
+	}
 
 	const FString ConfigValue = Get()->GetConfigValue(Name);
 	const int32 InitValue = ConfigValue.IsEmpty() ? DefaultValue : FCString::Atoi(*ConfigValue);
 
-	UConsoleUtils::RegisterIntCVar(Name, InitValue, Help);	
+	UConsoleUtils::RegisterIntCVar(Name, InitValue, Help);
 }
 
 void USettingsManager::RegisterBoolCVarSetting(FName Name, bool DefaultValue, const FString& Help)
 {
 	if (UConsoleUtils::IsCVarRegistered(Name))
+	{
 		return;
+	}
 
 	const FString ConfigValue = Get()->GetConfigValue(Name);
 	const bool InitValue = ConfigValue.IsEmpty() ? DefaultValue : FAutoSettingsStringUtils::IsTruthy(ConfigValue); // Also accept int too
@@ -60,7 +65,9 @@ void USettingsManager::RegisterBoolCVarSetting(FName Name, bool DefaultValue, co
 void USettingsManager::RegisterFloatCVarSetting(FName Name, float DefaultValue, const FString& Help)
 {
 	if (UConsoleUtils::IsCVarRegistered(Name))
+	{
 		return;
+	}
 
 	const FString ConfigValue = Get()->GetConfigValue(Name);
 	const float InitValue = ConfigValue.IsEmpty() ? DefaultValue : FCString::Atof(*ConfigValue);
@@ -71,7 +78,9 @@ void USettingsManager::RegisterFloatCVarSetting(FName Name, float DefaultValue, 
 void USettingsManager::RegisterStringCVarSetting(FName Name, const FString& DefaultValue, const FString& Help)
 {
 	if (UConsoleUtils::IsCVarRegistered(Name))
+	{
 		return;
+	}
 
 	const FString ConfigValue = Get()->GetConfigValue(Name);
 	const FString InitValue = ConfigValue.IsEmpty() ? DefaultValue : ConfigValue;
@@ -121,8 +130,22 @@ void USettingsManager::ApplySettingStatic(FAutoSettingData SettingData)
 USettingsManager::USettingsManager()
 {
 	const FString IniName = GetDefault<UAutoSettingsConfig>()->SettingsIniName;
+
 	// Load Ini
 	FConfigCacheIni::LoadGlobalIniFile(IniFilename, *IniName);
+
+	if (!IniName.Contains("User"))
+	{
+		// Hack: As of UE 5.4, the engine will refuse to save config files without the string "User" in the name, unless they are explicitly flagged in the SectionsToSave section
+		// We can use the bCanSaveAllSections flag to force the engine to save every section which restores the original functionality
+		// This flag is only loaded with the config cache in the first place, so we need to first set it manually and then flush and reload the config
+		// But we can't just set it in the ini file, because the engine will refuse to save it if it's not in the SectionsToSave section
+		// So we have to add the SectionsToSave section to the SectionsToSave section first so that we can save the bCanSaveAllSections flag before reloading the config cache
+		GConfig->SetString(TEXT("SectionsToSave"), TEXT("Section"), TEXT("SectionsToSave"), IniFilename);
+		GConfig->SetString(TEXT("SectionsToSave"), TEXT("bCanSaveAllSections"), TEXT("true"), IniFilename);
+		GConfig->Flush(false, IniFilename);
+		FConfigCacheIni::LoadGlobalIniFile(IniFilename, *IniName, nullptr, true);
+	}
 }
 
 void USettingsManager::Init()
@@ -137,17 +160,19 @@ FString USettingsManager::GetConfigValue(FName Key) const
 
 bool USettingsManager::HasConfigValue(FName Key) const
 {
-	FConfigSection* Section = GetSection();
+	const FConfigSection* Section = GetSection();
 	return Section && Section->Find(Key) != nullptr;
 }
 
-FString USettingsManager::GetConfigValue(FName Key, FConfigSection * Section) const
+FString USettingsManager::GetConfigValue(FName Key, const FConfigSection* Section) const
 {
 	if (Section)
 	{
-		FConfigValue* ConfigValue = Section->Find(Key);
+		const FConfigValue* ConfigValue = Section->Find(Key);
 		if (ConfigValue)
+		{
 			return ConfigValue->GetValue();
+		}
 	}
 
 	return FString();
@@ -179,7 +204,8 @@ void USettingsManager::SetConfigValue(FName Key, FString Value)
 		// This is important because config are applied in the order they are saved when the engine is started, and we want to preserve the order that the user applied
 		// in case there are any CVars that set other CVars, like the scalability ones
 		GConfig->RemoveKey(*GetSectionName(), *Key.ToString(), IniFilename);
-		GConfig->GetSectionPrivate(*GetSectionName(), true, false, IniFilename)->CompactStable();
+		const FConfigSection* Section = GConfig->GetSection(*GetSectionName(), true, IniFilename);
+		const_cast<FConfigSection*>(Section)->CompactStable();
 		GConfig->SetString(*GetSectionName(), *Key.ToString(), *Value, IniFilename);
 		GConfig->Flush(false, IniFilename);
 	}
@@ -187,14 +213,14 @@ void USettingsManager::SetConfigValue(FName Key, FString Value)
 
 void USettingsManager::ApplySetting(FAutoSettingData SettingData)
 {
-	if(!UConsoleUtils::IsCVarRegistered(SettingData.Key))
+	if (!UConsoleUtils::IsCVarRegistered(SettingData.Key))
 	{
 		FAutoSettingsError::LogMissingCVar("Apply Setting", SettingData.Key);
 		return;
 	}
 
 	const FString Previous = UConsoleUtils::GetStringCVar(SettingData.Key);
-	
+
 	UE_LOG(LogAutoSettings, Log, TEXT("Applying setting %s with value: %s, prevous: %s"), *SettingData.Key.ToString(), *SettingData.Value, *Previous);
 	UConsoleUtils::SetStringCVar(SettingData.Key, SettingData.Value);
 }
@@ -206,12 +232,15 @@ FString USettingsManager::GetSectionName()
 
 void USettingsManager::ApplySettingsFromConfig()
 {
-	FConfigSection* Section = GetSection();
+	// Load the ini file
+	GConfig->LoadFile(IniFilename);
+
+	const FConfigSection* Section = GetSection();
 
 	int32 SettingsLoaded = 0;
 
 	UE_LOG(LogAutoSettings, Log, TEXT("Applying initial settings from config"));
-	
+
 	if (Section)
 	{
 		TArray<FName> Keys;
@@ -235,7 +264,7 @@ void USettingsManager::ApplySettingsFromConfig()
 void USettingsManager::AutoDetectSettings(int32 WorkScale, float CPUMultiplier, float GPUMultiplier)
 {
 	const Scalability::FQualityLevels State = Scalability::BenchmarkQualityLevels(WorkScale, CPUMultiplier, GPUMultiplier);
-	Scalability::SetQualityLevels(State, true);
+	SetQualityLevels(State, true);
 
 	// Save new scalability values to config
 	// These are all the values that the Unreal scalability benchmark changes
@@ -249,7 +278,7 @@ void USettingsManager::AutoDetectSettings(int32 WorkScale, float CPUMultiplier, 
 	SaveSetting(FAutoSettingData("sg.FoliageQuality", FString::FromInt(State.FoliageQuality)), false);
 }
 
-FConfigSection * USettingsManager::GetSection() const
+const FConfigSection* USettingsManager::GetSection() const
 {
-	return GConfig->GetSectionPrivate(*GetSectionName(), false, true, IniFilename);
+	return GConfig->GetSection(*GetSectionName(), true, IniFilename);
 }

@@ -60,40 +60,42 @@ void UActionLabel::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 
-	if (GetKeyContainer())
+	if (!GetKeyContainer())
 	{
-		GetKeyContainer()->ClearChildren();
-
-		if(!ensure(KeyLabelWidgetClass))
-		{
-			FAutoSettingsError::LogInvalidClass(GetClass(), "KeyLabelWidgetClass");
-		}
-		else
-		{
-			// Construct labels for each key and separators
-			PrimaryKeyLabel = CreateLabel();
-			ShiftLabel = CreateLabel(UInputMappingManager::GetInputConfigStatic()->ShiftModifierOverrideText);
-			CtrlLabel = CreateLabel(UInputMappingManager::GetInputConfigStatic()->CtrlModifierOverrideText);
-			AltLabel = CreateLabel(UInputMappingManager::GetInputConfigStatic()->AltModifierOverrideText);
-			CmdLabel = CreateLabel(UInputMappingManager::GetInputConfigStatic()->CmdModifierOverrideText);
-
-			GetKeyContainer()->AddChild(ShiftLabel);
-			ShiftSeparator = AddSeparatorIfValid();
-
-			GetKeyContainer()->AddChild(CtrlLabel);
-			CtrlSeparator = AddSeparatorIfValid();
-
-			GetKeyContainer()->AddChild(AltLabel);
-			AltSeparator = AddSeparatorIfValid();
-
-			GetKeyContainer()->AddChild(CmdLabel);
-			CmdSeparator = AddSeparatorIfValid();
-
-			GetKeyContainer()->AddChild(PrimaryKeyLabel);
-
-			UpdateLabel();
-		}
+		FAutoSettingsError::LogMissingBindWidget(GetClass(), GET_MEMBER_NAME_CHECKED(ThisClass, KeyContainer));
+		return;
 	}
+	
+	GetKeyContainer()->ClearChildren();
+
+	if(!ensure(KeyLabelWidgetClass))
+	{
+		FAutoSettingsError::LogInvalidClass(GetClass(), "KeyLabelWidgetClass");
+		return;
+	}
+
+	// Construct labels for each key and separators
+	PrimaryKeyLabel = CreateLabel();
+	ShiftLabel = CreateLabel(UInputMappingManager::GetInputConfigStatic()->ShiftModifierOverrideText);
+	CtrlLabel = CreateLabel(UInputMappingManager::GetInputConfigStatic()->CtrlModifierOverrideText);
+	AltLabel = CreateLabel(UInputMappingManager::GetInputConfigStatic()->AltModifierOverrideText);
+	CmdLabel = CreateLabel(UInputMappingManager::GetInputConfigStatic()->CmdModifierOverrideText);
+
+	GetKeyContainer()->AddChild(ShiftLabel);
+	ShiftSeparator = AddSeparatorIfValid();
+
+	GetKeyContainer()->AddChild(CtrlLabel);
+	CtrlSeparator = AddSeparatorIfValid();
+
+	GetKeyContainer()->AddChild(AltLabel);
+	AltSeparator = AddSeparatorIfValid();
+
+	GetKeyContainer()->AddChild(CmdLabel);
+	CmdSeparator = AddSeparatorIfValid();
+
+	GetKeyContainer()->AddChild(PrimaryKeyLabel);
+
+	UpdateLabel();
 }
 
 void UActionLabel::UpdateKeyLabels(FInputActionKeyMapping Mapping)

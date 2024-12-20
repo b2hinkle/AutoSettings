@@ -20,7 +20,7 @@ struct AUTOSETTINGSINPUT_API FPlayerInputMappings
     
     // String to identify the player that owns these mappings
     // Preferably the Unique Net ID of the player, but can fall back to a Controller ID
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly, Category = "Input Mapping")
     FString PlayerId;
 	
     UPROPERTY(meta = (DeprecatedProperty))
@@ -37,7 +37,7 @@ struct AUTOSETTINGSINPUT_API FPlayerInputMappings
     bool bNullBasePreset = false;
 
     // Modifications that the player has made to the base preset
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly, Category = "Input Mapping")
     FInputMappingLayout MappingOverrides;
 
     UPROPERTY(meta = (DeprecatedProperty))

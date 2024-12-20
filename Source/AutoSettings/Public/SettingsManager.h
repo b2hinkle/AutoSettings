@@ -122,7 +122,7 @@ public:
 	bool HasConfigValue(FName Key) const;
 
 	// Get a setting value from the specified section of config
-	FString GetConfigValue(FName Key, FConfigSection* Section) const;
+	FString GetConfigValue(FName Key, const FConfigSection* Section) const;
 
 	// Saves the value in config for a setting
 	// @param	bApplySetting	If true, apply the setting before saving it
@@ -146,5 +146,5 @@ private:
 
 	void AutoDetectSettings(int32 WorkScale = 10, float CPUMultiplier = 1.0f, float GPUMultiplier = 1.0f);
 	
-	FConfigSection* GetSection() const;
+	const FConfigSection* GetSection() const;
 };

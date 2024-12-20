@@ -22,7 +22,7 @@ struct AUTOSETTINGSINPUT_API FInputMappingLayout
 	    SetConfig(InConfig);
     }
 
-	UPROPERTY(config, EditAnywhere, Category = "Input Mapping Preset", meta = (EditCondition = "!bUseDefaultMappings"))
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Input Mapping Preset", meta = (EditCondition = "!bUseDefaultMappings"))
 	TArray<FInputMappingGroup> MappingGroups;
 
 	TWeakInterfacePtr<const IAutoSettingsInputConfigInterface> Config;

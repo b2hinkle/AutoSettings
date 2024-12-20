@@ -14,7 +14,7 @@ class IAutoSettingsInputConfigInterface;
 // Each action should have a unique name and each axis should have a unique name + scale combination, however axis keys count as all scales
 // It's valid to have axis mappings for (Name: MoveForward, Scale: 1, Key: W) and (Name: MoveForward, Scale: -1, Key: S) at the same time
 // It's not valid to have (Name: MoveForward, Scale: 1, Key: GamepadLeftStickY) and (Name: MoveForward, Scale: -1, Key: S)
-USTRUCT()
+USTRUCT(BlueprintType)
 struct AUTOSETTINGSINPUT_API FInputMappingGroup
 {
 	GENERATED_BODY()
@@ -28,11 +28,11 @@ struct AUTOSETTINGSINPUT_API FInputMappingGroup
 	}
 	
 	// Action mappings in this group
-	UPROPERTY(config, EditAnywhere, Category = "Input Mapping Group", meta = (TitleProperty = "ActionName"))
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Input Mapping Group", meta = (TitleProperty = "ActionName"))
 	TArray<FConfigActionKeyMapping> ActionMappings;
 
 	// Axis mappings in this group
-	UPROPERTY(config, EditAnywhere, Category = "Input Mapping Group", meta = (TitleProperty = "AxisName"))
+	UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category = "Input Mapping Group", meta = (TitleProperty = "AxisName"))
 	TArray<FConfigAxisKeyMapping> AxisMappings;
 
 	UPROPERTY(config)

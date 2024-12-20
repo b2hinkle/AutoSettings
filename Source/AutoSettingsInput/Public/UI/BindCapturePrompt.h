@@ -15,7 +15,7 @@ struct AUTOSETTINGSINPUT_API FCapturedInput
 	FInputChord Chord;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	float AxisScale;
+	float AxisScale = 0.f;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FChordCapturedEvent, FCapturedInput, CapturedInput);

@@ -12,13 +12,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMappingsChanged, APlayerControlle
 /**
  * Manages input mapping for players
  */
-UCLASS(Config = Input)
+UCLASS(Config = UserSettings)
 class AUTOSETTINGSINPUT_API UInputMappingManager : public UEngineSubsystem
 {
 	GENERATED_BODY()
-	
-public:
 
+public:
 	UInputMappingManager();
 
 	// Fired when any local player's input mappings are updated
@@ -56,12 +55,14 @@ public:
 	// Override a player's action mapping on the given mapping group and save to config
 	// @param bAnyKeyGroup If true will replace existing mappings on any key group instead of just the key group of the mapping specified.
 	UFUNCTION(BlueprintCallable, Category = "Input Mapping", DisplayName = "Add Player Input Action Override")
-	static void AddPlayerActionOverrideStatic(APlayerController* Player, const FInputActionKeyMapping& NewMapping, int32 MappingGroup, bool bAnyKeyGroup = false);
+	static void AddPlayerActionOverrideStatic(APlayerController* Player, const FInputActionKeyMapping& NewMapping,
+		int32 MappingGroup, bool bAnyKeyGroup = false);
 
 	// Override a player's axis mapping on the given mapping group
 	// @param bAnyKeyGroup If true will replace existing mappings on any key group instead of just the key group of the mapping specified.
 	UFUNCTION(BlueprintCallable, Category = "Input Mapping", DisplayName = "Add Player Input Axis Override")
-	static void AddPlayerAxisOverrideStatic(APlayerController* Player, const FInputAxisKeyMapping& NewMapping, int32 MappingGroup, bool bAnyKeyGroup = false);
+	static void AddPlayerAxisOverrideStatic(APlayerController* Player, const FInputAxisKeyMapping& NewMapping,
+		int32 MappingGroup, bool bAnyKeyGroup = false);
 
 	// Initialize a player's input overrides manually
 	// This is what sets the saved input mappings on the Player Controller itself
@@ -72,12 +73,14 @@ public:
 	// Returns the mapping used for the given action
 	// @param MappingGroup Mapping group index - if an input has multiple mappings, this will determine which one to use. A value of -1 will use the first mapping group available.
 	UFUNCTION(BlueprintPure, Category = "Input Mapping", Displayname = "Get Player Action Mapping")
-	static FInputActionKeyMapping GetPlayerActionMappingStatic(APlayerController* Player, FName ActionName, int32 MappingGroup = -1);
+	static FInputActionKeyMapping GetPlayerActionMappingStatic(APlayerController* Player, FName ActionName,
+		int32 MappingGroup = -1);
 
 	// Returns the mapping used for the given axis and scale
 	// @param MappingGroup Mapping group index - if an input has multiple mappings, this will determine which one to use. A value of -1 will use the first mapping group available.
 	UFUNCTION(BlueprintPure, Category = "Input Mapping", Displayname = "Get Player Axis Mapping")
-	static FInputAxisKeyMapping GetPlayerAxisMappingStatic(APlayerController* Player, FName AxisName, float Scale, int32 MappingGroup = -1);
+	static FInputAxisKeyMapping GetPlayerAxisMappingStatic(APlayerController* Player, FName AxisName, float Scale,
+		int32 MappingGroup = -1);
 
 	static const UAutoSettingsInputConfig* GetInputConfigStatic();
 
@@ -85,41 +88,53 @@ public:
 	static void DumpPlayers();
 	static void TestLayoutMerge();
 
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
 	void SetPlayerKeyGroup(APlayerController* Player, FGameplayTag KeyGroup);
 
 	// Override a player's action mapping on the given mapping group and save to config
 	// @param	bAnyKeyGroup	If true will replace existing mappings on any key group instead of just the key group of the mapping specified.
 	UFUNCTION(BlueprintCallable, Category = "Input Mapping")
-	void AddPlayerActionOverride(APlayerController* Player, const FInputActionKeyMapping& NewMapping, int32 MappingGroup, bool bAnyKeyGroup = false);
+	void AddPlayerActionOverride(APlayerController* Player, const FInputActionKeyMapping& NewMapping,
+		int32 MappingGroup, bool bAnyKeyGroup = false);
 
 	// Override a player's axis mapping on the given mapping group
 	// @param	bAnyKeyGroup	If true will replace existing mappings on any key group instead of just the key group of the mapping specified.
 	UFUNCTION(BlueprintCallable, Category = "Input Mapping")
-	void AddPlayerAxisOverride(APlayerController* Player, const FInputAxisKeyMapping& NewMapping, int32 MappingGroup, bool bAnyKeyGroup = false);
+	void AddPlayerAxisOverride(APlayerController* Player, const FInputAxisKeyMapping& NewMapping, int32 MappingGroup,
+		bool bAnyKeyGroup = false);
 
 	// Returns the mapping used for the given action
 	// @param MappingGroup Mapping group index - if an input has multiple mappings, this will determine which one to use. A value of -1 will use the first mapping group available.
 	UFUNCTION(BlueprintPure, Category = "Input Mapping")
-	FInputActionKeyMapping GetPlayerActionMapping(APlayerController* Player, FName ActionName, int32 MappingGroup, FGameplayTag KeyGroup, bool bUsePlayerKeyGroup = false ) const;
+	FInputActionKeyMapping GetPlayerActionMapping(APlayerController* Player, FName ActionName, int32 MappingGroup,
+		FGameplayTag KeyGroup, bool bUsePlayerKeyGroup = false) const;
 
 	// Returns the mapping used for the given axis and scale
 	// @param MappingGroup Mapping group index - if an input has multiple mappings, this will determine which one to use. A value of -1 will use the first mapping group available.
 	UFUNCTION(BlueprintPure, Category = "Input Mapping")
-	FInputAxisKeyMapping GetPlayerAxisMapping(APlayerController* Player, FName AxisName, float Scale, int32 MappingGroup, FGameplayTag KeyGroup, bool bUsePlayerKeyGroup = false) const;
+	FInputAxisKeyMapping GetPlayerAxisMapping(APlayerController* Player, FName AxisName, float Scale,
+		int32 MappingGroup, FGameplayTag KeyGroup,
+		bool bUsePlayerKeyGroup = false) const;
 
 	// Returns the mappings used for the given action
 	// @param MappingGroup Mapping group index - if an input has multiple mappings, this will determine which one to use. A value of -1 will search all mapping groups.
 	UFUNCTION(BlueprintPure, Category = "Input Mapping")
-	TArray<FInputActionKeyMapping> GetPlayerActionMappings(APlayerController* Player, FName ActionName, int32 MappingGroup, FGameplayTag KeyGroup, bool bUsePlayerKeyGroup = false ) const;
+	TArray<FInputActionKeyMapping> GetPlayerActionMappings(APlayerController* Player, FName ActionName,
+		int32 MappingGroup, FGameplayTag KeyGroup,
+		bool bUsePlayerKeyGroup = false) const;
 
 	// Returns the mappings used for the given axis and scale
 	// @param MappingGroup Mapping group index - if an input has multiple mappings, this will determine which one to use. A value of -1 will search all mapping groups.
 	UFUNCTION(BlueprintPure, Category = "Input Mapping")
-	TArray<FInputAxisKeyMapping> GetPlayerAxisMappings(APlayerController* Player, FName AxisName, float Scale, int32 MappingGroup, FGameplayTag KeyGroup, bool bUsePlayerKeyGroup = false) const;
+	TArray<FInputAxisKeyMapping> GetPlayerAxisMappings(APlayerController* Player, FName AxisName, float Scale,
+		int32 MappingGroup, FGameplayTag KeyGroup,
+		bool bUsePlayerKeyGroup = false) const;
 
 	// Finds any mappings that use the specified Key
 	UFUNCTION(BlueprintPure, Category = "Input Mapping")
-	void GetPlayerMappingsByKey(APlayerController* Player, FKey Key, TArray<FInputActionKeyMapping>& Actions, TArray<FInputAxisKeyMapping>& Axes ) const;
+	void GetPlayerMappingsByKey(APlayerController* Player, FKey Key, TArray<FInputActionKeyMapping>& Actions,
+		TArray<FInputAxisKeyMapping>& Axes) const;
 
 	// Set a player's input mapping preset
 	void SetPlayerInputPreset(APlayerController* Player, FInputMappingPreset Preset);
@@ -128,16 +143,17 @@ public:
 	// Presets and tags are defined in project settings (AutoSettings page)
 	void SetPlayerInputPreset(APlayerController* Player, FGameplayTag PresetTag);
 
-	bool IsPlayerControllerRegistered(APlayerController* PlayerController) const { return RegisteredPlayerControllers.Contains(PlayerController); }
+	bool IsPlayerControllerRegistered(APlayerController* PlayerController) const
+	{
+		return RegisteredPlayerControllers.Contains(PlayerController);
+	}
 
 	const UAutoSettingsInputConfig* GetInputConfig() const;
 
 protected:
-
 	virtual void PostInitProperties() override;
 
 private:
-
 	UPROPERTY(Config)
 	TArray<FPlayerInputMappings> PlayerInputOverrides;
 
@@ -154,5 +170,5 @@ private:
 	void SavePlayerInputMappings(APlayerController* Player, FPlayerInputMappings& Mappings);
 
 	UFUNCTION()
-	void OnRegisteredPlayerControllerDestroyed(AActor* DestroyedActor);	
+	void OnRegisteredPlayerControllerDestroyed(AActor* DestroyedActor);
 };

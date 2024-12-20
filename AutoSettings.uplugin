@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
-	"Version": 39,
-	"VersionName": "1.21-5.0",
+	"Version": 12900,
+	"VersionName": "1.29.0-5.5",
 	"FriendlyName": "Auto Settings",
 	"Description": "Game options and input binding toolkit",
 	"Category": "Settings",
@@ -10,7 +10,7 @@
 	"DocsURL": "https://acren.github.io/AutoSettingsDocs/",
 	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/fcc480bac77b4373bc6c68f0ae4f9847",
 	"SupportURL": "https://acren.github.io/AutoSettingsDocs/support/",
-	"EngineVersion": "5.0.0",
+	"EngineVersion": "5.5.0",
 	"CanContainContent": true,
 	"Installed": true,
 	"Modules": [
